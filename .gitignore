@@ -1,0 +1,5 @@
+venv/*
+run.sh
+*.db
+__pycache__/*
+.idea/*
