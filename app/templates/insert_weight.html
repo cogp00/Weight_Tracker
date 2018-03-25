@@ -2,44 +2,29 @@
 <html>
  <body>
     <form action="" method="post">
-    {{ form.hidden_tag() }}
+        {{ form.hidden_tag() }}
+        {{ form.days_list.label }}
         <table>
         <tr>
-            <td>{{ form.sunday.label }}</td>
-            <td>{{ form.monday.label }}</td>
-            <td>{{ form.tuesday.label }}</td>
-            <td>{{ form.wednesday.label }}</td>
-            <td>{{ form.thursday.label }}</td>
-            <td>{{ form.friday.label  }}</td>
-            <td>{{ form.saturday.label  }}</td>
-            <td rowspan="3">{{ form.submit() }} </td>
+            {% for d in form.days_list %}
+                <td>
+                    {{ d.label }}
+                </td>
+            {% endfor %}
+            <td rowspan="2"> {{ form.submit() }} </td>
         </tr>
         <tr>
-            <td> {{ dates[0] }} </td>
-            <td> {{ dates[1] }} </td>
-            <td> {{ dates[2] }} </td>
-            <td> {{ dates[3] }} </td>
-            <td> {{ dates[4] }} </td>
-            <td> {{ dates[5] }} </td>
-            <td> {{ dates[6] }} </td>
-        </tr>
-        <tr>
-            <td>{{ form.sunday(size=8) }} </td>
-            <td>{{ form.monday(size=8) }}</td>
-            <td>{{ form.tuesday(size=8) }}</td>
-            <td>{{ form.wednesday(size=8) }}</td>
-            <td>{{ form.thursday(size=8) }}</td>
-            <td>{{ form.friday(size=8) }}</td>
-            <td>{{ form.saturday(size=8) }}</td>
+            {% for d in form.days_list %}
+                <td>
+                    {{ d(size=8) }}
+                </td>
+            {% endfor %}
         </tr>
         </table>
-        {% for error in form.sunday.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-        {% for error in  form.form_wide_error.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
     </form>
+    {% for error in  form.form_wide_error.errors %}
+    <span style="color: red;">[{{ error }}]</span>
+    {% endfor %}
  </body>
 
 
