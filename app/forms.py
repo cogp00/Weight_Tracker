@@ -5,6 +5,10 @@ from datetime import datetime
 from datetime import timedelta
 import re
 
+class ViewWeightForm(FlaskForm):
+    days_list = FieldList(StringField())
+    submit = SubmitField("Updated S")
+
 class AddWeightForm(FlaskForm):
     days_list = FieldList(StringField())
     form_wide_error = HiddenField()

@@ -1,7 +1,8 @@
-CREATE TABLE testweight(
+CREATE TABLE weight``(
 	measurement_date Date Primary Key,
 	weight Numeric(4,1) Not Null
 );
+CREATE DATABASE computestvr WITH OWNER=compu TEMPLATE=compu;
 CREATE OR REPLACE VIEW HELP_LOAD_WEIGHT AS
 SELECT measurement_date, weight FROM testweight
 WHERE NOT EXISTS(SELECT * FROM weight WHERE weight.measurement_date = testweight.measurement_date ) order by measurement_date desc;
