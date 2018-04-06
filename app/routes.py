@@ -8,35 +8,47 @@ import calendar
 
 @app.route("/", methods=["GET"])
 def view_weight():
-    month = [week for week in calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(date.today().year, date.today().month)]
-    app.logger.info(min([day for week in month for day in week]))
-    app.logger.info(max([day for week in month for day in week]))
-    week = [week for week in calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(date.today().year, date.today().month) if date.today() in week]
-    app.logger.info(week)
-    start_date = datetime(date.today().year, date.today().month, 1)
-    select = "SELECT days, weight FROM public.weight RIGHT JOIN generate_series(%(start)s, %(start)s + "\
-             "interval '6 day', interval '1 day') days ON days = weight.measurement_date ORDER BY days asc"
-    return render_template("view_weight.html", curdate=datetime(date.today().year,date.today().month, 1))
+    month = [week for week in
+             calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(date.today().year, date.today().month)]
+    start_date = min([day for week in month for day in week])
+    end_date = max([day for week in month for day in week])
+
+    select = "SELECT measurement_date, weight FROM public.weight WHERE weight.measurement_date between %(start)s " \
+             "AND %(end)s order by measurement_date asc"
+
+    current_month_values = db.engine.execute(select, {'start': start_date, 'end': end_date}).fetchall()
+    current_month_values = dict(zip([val[0] for val in current_month_values], [val[1] for val in current_month_values]))
+    weight_month = []
+    for week in month:
+        for day in week:
+            if day in current_month_values:
+                weight_month.append((day, current_month_values[day]))
+            else:
+                weight_month.append((day, None))
+    return render_template("view_weight.html", month=weight_month)
 
 @app.route("/add_weight", methods=["GET", "POST"])
 def update_weight():
-    week = [day for week in calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(date.today().year, date.today().month) if date.today() in week for day in week]
-    select = "SELECT measurement_date, weight FROM public.weight WHERE weight.measurement_date between %(start)s AND %(end)s"
-
     form = AddWeightForm()
-    form.start_date.data = min(week)
-    current_week_values = db.engine.execute(select, {'start': min(week), 'end': max(week)}).fetchall()
+    start_date = date.today()
+    form.start_date.data = start_date.strftime('%m-%d-%Y')
+    py_week = [day for week in calendar.Calendar(firstweekday=calendar.SUNDAY)\
+               .monthdatescalendar(date.today().year, date.today().month) if start_date in week for day in week]
+    select = "SELECT measurement_date, weight FROM public.weight WHERE weight.measurement_date between %(start)s " \
+             "AND %(end)s order by measurement_date asc"
 
+    current_week_values = db.engine.execute(select, {'start': py_week[0], 'end': py_week[-1]}).fetchall()
+    current_week_values = dict(zip([day[0] for day in current_week_values],
+                                   [weight[1] for weight in current_week_values]))
     if request.method == 'GET':
-        sub_iter
-        for day in week:
-            if current_week_values and current_week_values[-1][0] == day:
-                form.days_list.append_entry(current_week_values[-1][1])
-        for vdate, vweight in current_week_values:
-            form.days_list.append_entry(vweight)
+        for day in py_week:
+            if day in current_week_values:
+                form.days_list.append_entry(current_week_values[day])
+            else:
+                form.days_list.append_entry()
 
-    for nth, day_field in enumerate(form.days_list):
-        day_field.label = current_week_values[nth][0].strftime("%m-%d")
+        for nth, day_field in enumerate(form.days_list):
+            day_field.label = py_week[nth].strftime("%m-%d")
 
     if form.validate_on_submit():
         insert_list = []
@@ -55,13 +67,14 @@ def update_weight():
                 cmd_cur.executemany(cmd_sql, cmd_list)
 
         for nth, updated in enumerate(form.days_list):
-            if current_week_values[nth][1] is None and updated.data != '':
-                insert_list.append(make_dict(current_week_values[nth][0], float(updated.data)))
-            elif updated.data == '':
-                if current_week_values[nth][1] is not None:
-                    delete_list.append(make_dict(current_week_values[nth][0], None))
-            elif current_week_values[nth][1] != float(updated.data):
-                update_list.append(make_dict(current_week_values[nth][0], float(updated.data)))
+            if (not current_week_values and updated.data) or \
+                    (py_week[nth] not in current_week_values and updated.data != ''):
+                insert_list.append(make_dict(py_week[nth], float(updated.data)))
+            elif py_week[nth] in current_week_values:
+                if updated.data == '' and current_week_values[py_week[nth]] is not None:
+                    delete_list.append(make_dict(py_week[nth], None))
+                elif updated.data != current_week_values[py_week[nth]]:
+                    update_list.append(make_dict(py_week[nth], float(updated.data)))
 
         if insert_list + update_list + delete_list:
             rawcon = db.engine.raw_connection()
@@ -73,6 +86,4 @@ def update_weight():
             rawcon.close()
 
         return "Data Loaded"
-
-
     return render_template("insert_weight.html", form=form)

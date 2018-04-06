@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Title</title>
-  {{ curdate }}
+  {% for week in month %}
+  <p> {{week[0]}} {{week[1]}} </p>
+  {% endfor %}
 </head>
 <body>
 
