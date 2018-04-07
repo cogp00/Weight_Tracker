@@ -2,10 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Title</title>
-  {% for week in month %}
-  <p> {{week[0]}} {{week[1]}} </p>
-  {% endfor %}
+  <title>View Weight</title>
+  <form action="" method="post">
+    {{ form.hidden_tag() }}
+    {{ form.start_date }}
+      <table>
+        <colgroup span="12" width="140px" ></colgroup>
+        <tr>
+            <th colspan="12"> {{ month_label }} </th>
+        </tr>
+        <tr>
+            <th> {{ form.previous() }} </th>
+            {% for l in days %}
+                <th>
+                    {{l}}
+                </th>
+            {% endfor %}
+            <th> {{ form.next() }} </th>
+        </tr>
+        {% for week in month %}
+            <tr vertical-align="top">
+                <td ></td>
+                {% for day in week %}
+                    <td>
+                        {% if loop.index < 8 %}
+                            <p align="center">{{day[0].strftime('%m/%d')}}<br>{{day[1]}}</p>
+                        {% else %}
+                            <p align="center"> {{day}} </p>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+                <td></td>
+            </tr>
+        {% endfor %}
+      </table>
+  </form>
 </head>
 <body>
 

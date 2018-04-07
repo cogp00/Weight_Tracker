@@ -6,8 +6,10 @@ from datetime import timedelta
 import re
 
 class ViewWeightForm(FlaskForm):
-    days_list = FieldList(StringField())
-    submit = SubmitField("Updated S")
+    start_date = HiddenField()
+    previous = SubmitField("Previous")
+    next = SubmitField("Next")
+
 
 class AddWeightForm(FlaskForm):
     days_list = FieldList(StringField())
@@ -18,7 +20,7 @@ class AddWeightForm(FlaskForm):
 
     def validate(self):
         days_with_bad_format = []
-        start_date = datetime.strptime(self.start_date.data, '%m-%d-%Y')
+        start_date = datetime.fromtimestamp(self.start_date.data)
 
         for nth, day in enumerate(self.days_list):
             if day.data:
