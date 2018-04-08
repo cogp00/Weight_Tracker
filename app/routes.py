@@ -1,4 +1,5 @@
 from app import app, db
+from app.models import Weight
 from app.forms import AddWeightForm, ViewWeightForm
 from flask import render_template, request
 from datetime import date
@@ -32,11 +33,8 @@ def view_weight():
     month = [week for week in
              calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(base_date.year, base_date.month)]
 
-    select = "SELECT measurement_date, weight FROM public.weight WHERE weight.measurement_date between %(start)s " \
-             "AND %(end)s order by measurement_date asc"
-
-    month_values = {day.isoformat(): weight for day, weight in
-                    db.engine.execute(select, {'start': month[0][0], 'end': month[-1][-1]}).fetchall()}
+    month_values = {w.measurement_date.isoformat(): w.weight for w in
+                    Weight.query.filter(Weight.measurement_date.between(month[0][0], month[-1][-1])).all()}
 
     weight_month = []
     day_labels = []
@@ -78,53 +76,31 @@ def update_weight():
     py_week = [day for week in calendar.Calendar(firstweekday=calendar.SUNDAY)\
                .monthdatescalendar(base_date.year, base_date.month) if base_date.date() in week for day in week]
     form.start_date.data = datetime(year=py_week[0].year, month=py_week[0].month, day=py_week[0].day).timestamp()
-    select = "SELECT measurement_date, weight FROM public.weight WHERE weight.measurement_date between %(start)s " \
-             "AND %(end)s order by measurement_date desc"
 
-    week_values = {day.isoformat(): weight for day, weight in
-                   db.engine.execute(select, {'start': py_week[0], 'end': py_week[-1]}).fetchall()}
+    week_values = {w.measurement_date.isoformat(): w for w in
+                   Weight.query.filter(Weight.measurement_date.between(py_week[0], py_week[-1])).all()}
 
     if request.method == 'GET':
         day_labels = []
         date_labels = []
         for day in py_week:
-            form.days_list.append_entry(week_values.get(day.isoformat(), ''))
+            if day.isoformat() in week_values:
+                form.days_list.append_entry(week_values[day.isoformat()].weight)
+            else:
+                form.days_list.append_entry('')
             day_labels.append(day.strftime('%A'))
             date_labels.append(day.strftime('%m-%d'))
 
     if form.validate_on_submit():
-        insert_list = []
-        update_list = []
-        delete_list = []
-
-        sql_insert = 'INSERT INTO public.weight(measurement_date, weight) VALUES(%(vdate)s, %(vweight)s)'
-        sql_update = 'UPDATE public.weight SET weight = %(vweight)s WHERE measurement_date = %(vdate)s'
-        sql_delete = 'DELETE FROM public.weight WHERE measurement_date = %(vdate)s'
-
-        def make_dict(a, b):
-            return {'vdate': a, 'vweight': b}
-
-        def run_list(cmd_cur, cmd_sql, cmd_list):
-            if cmd_list:
-                cmd_cur.executemany(cmd_sql, cmd_list)
-
         start_date = date.fromtimestamp(form.start_date.data)
         for nth, updated in enumerate(form.days_list):
             cur_date = (start_date + timedelta(days=nth)).isoformat()
             if week_values.get(cur_date, -1) == -1 and updated.data != '':
-                insert_list.append(make_dict(py_week[nth], float(updated.data)))
+                db.session.add(Weight(measurement_date=py_week[nth], weight=float(updated.data)))
             elif week_values.get(cur_date, -1) != -1 and updated.data == '':
-                delete_list.append(make_dict(py_week[nth], None))
-            elif week_values.get(cur_date, -1) != -1 and week_values.get(cur_date, -1) != updated.data:
-                update_list.append(make_dict(py_week[nth], updated.data))
-
-        if insert_list + update_list + delete_list:
-            rawcon = db.engine.raw_connection()
-            rawcur = rawcon.cursor()
-            run_list(rawcur, sql_insert, insert_list)
-            run_list(rawcur, sql_update, update_list)
-            run_list(rawcur, sql_delete, delete_list)
-            rawcon.commit()
-            rawcon.close()
+                db.session.delete(week_values[cur_date])
+            elif week_values.get(cur_date, -1) != -1 and week_values[cur_date].weight != updated.data:
+                week_values[cur_date].weight = float(updated.data)
+        db.session.commit()
         return "Data Loaded"
     return render_template("insert_weight.html", form=form, labels=day_labels, dates=date_labels)
