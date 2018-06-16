@@ -1,41 +1,70 @@
 <!DOCTYPE html>
+<link rel="stylesheet" href="{{ url_for('static', filename='view_weight.css') }}">
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>View Weight</title>
   <form action="" method="post">
-    {{ form.hidden_tag() }}
-    {{ form.start_date }}
-      <table>
-        <colgroup span="12" width="140px" ></colgroup>
-        <tr>
-            <th colspan="12"> {{ month_label }} </th>
-        </tr>
-        <tr>
-            <th> {{ form.previous() }} </th>
-            {% for l in days %}
-                <th>
-                    {{l}}
-                </th>
-            {% endfor %}
-            <th> {{ form.next() }} </th>
-        </tr>
-        {% for week in month %}
-            <tr vertical-align="top">
-                <td ></td>
-                {% for day in week %}
-                    <td>
-                        {% if loop.index < 8 %}
-                            <p align="center">{{day[0].strftime('%m/%d')}}<br>{{day[1]}}</p>
-                        {% else %}
-                            <p align="center"> {{day}} </p>
-                        {% endif %}
+      {{ form.hidden_tag() }}
+      {{ form.start_date }}
+      <div>
+          {{ form.previous() }}
+          <table>
+            <thead>
+                <tr>
+                    <th colspan="{{ 14 + summary_labels|length - 1}}"> {{ month_label }} </th>
+                </tr>
+                <tr>
+                    <th rowspan="2">Week</th>
+                    {% for l in days %}
+                        <th rowspan="2" padding=2px>
+                            {{l}}
+                        </th>
+                    {% endfor %}
+                    {% if summary_labels|length > 0 %}
+                        <th colspan="{{summary_labels|length}}">Summary</th>
+                    {% endif %}
+                </tr>
+                <tr>
+                    {% for sl in summary_labels %}
+                        <th>
+                            {{sl}}
+                        </th>
+                    {% endfor %}
+
+                </tr>
+            </thead>
+            {% for week in month %}
+                <tr>
+                    <td rowspan="2" class="current_week">
+                        Week {{loop.index - 1 }}
                     </td>
-                {% endfor %}
-                <td></td>
-            </tr>
-        {% endfor %}
-      </table>
+                    {% for day in week %}
+                        <td class="day_of_month">
+                            {{day[0].strftime('%d')}}
+                        </td>
+                    {% endfor %}
+                    {% for ws in month_summary[loop.index-1] %}
+                        <td rowspan="2" class="week_summary">
+                            {{ ws }}
+                        </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for day in week %}
+                        <td class="weight">
+                            {% if day[1] %}
+                                {{day[1]}}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+          </table>
+          {{ form.next() }}
+      </div>
   </form>
 </head>
 <body>

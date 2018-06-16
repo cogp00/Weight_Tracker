@@ -38,8 +38,10 @@ def view_weight():
 
     weight_month = []
     day_labels = []
+    weight_summary = []
     for num_week in range(len(month)):
         week = []
+        week_summary = []
         for num_day in range(7):
             if num_week == 0:
                 day_labels.append(month[num_week][num_day].strftime('%A'))
@@ -54,17 +56,18 @@ def view_weight():
             weekly_average = '-'
             weekly_max = '-'
             weekly_min = '-'
-        week.append(weekly_average)
-        week.append(weekly_max)
-        week.append(weekly_min)
+        week_summary.append(weekly_average)
+        week_summary.append(weekly_max)
+        week_summary.append(weekly_min)
         weight_month.append(week)
-    day_labels.append("Averages")
-    day_labels.append("Max")
-    day_labels.append("Min")
+        weight_summary.append(week_summary)
+    summary_labels = ["Averages", "Max", "Min"]
     return render_template("view_weight.html",
-                           month_label=base_date.strftime('%B, %Y'),
+                           month_label=base_date.strftime('%B %Y'),
                            days=day_labels,
+                           summary_labels=summary_labels,
                            month=weight_month,
+                           month_summary=weight_summary,
                            form=form)
 
 

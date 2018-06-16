@@ -1,0 +1,33 @@
+div{
+    display: flex;
+    align-items: flex-start;
+}
+
+table {
+  border-collapse: collapse;
+  border: 2px solid rgb(200,200,200);
+  letter-spacing: 1px;
+  font-size: 0.8rem;
+}
+
+td, th {
+  border: 1px solid rgb(190,190,190);
+  padding: 10px 20px;
+}
+
+td.weight{
+    text-align: center;
+    border-top: none;
+}
+
+td.current_week, td.week_summary{
+    text-align: center;
+}
+
+
+td.day_of_month{
+    text-align: right;
+    padding: 0px;
+    border-bottom: none;
+}
+
