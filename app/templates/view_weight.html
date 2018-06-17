@@ -37,7 +37,19 @@
             {% for week in month %}
                 <tr>
                     <td rowspan="2" class="current_week">
-                        Week {{loop.index - 1 }}
+                        {% if loop.index -1 == 0 %}
+                            {{ form.week_0() }}
+                        {% elif loop.index -1 == 1 %}
+                            {{ form.week_1() }}
+                        {% elif loop.index -1 == 2 %}
+                            {{ form.week_2() }}
+                        {% elif loop.index -1 == 3 %}
+                            {{ form.week_3() }}
+                        {% elif loop.index -1 == 4 %}
+                            {{ form.week_4() }}
+                        {% elif loop.index -1 == 5 %}
+                            {{ form.week_5() }}
+                        {% endif %}
                     </td>
                     {% for day in week %}
                         <td class="day_of_month">

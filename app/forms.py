@@ -5,16 +5,25 @@ from datetime import datetime
 from datetime import timedelta
 import re
 
-class ViewWeightForm(FlaskForm):
+class ViewWeightFormBase(FlaskForm):
     start_date = HiddenField()
     previous = SubmitField("Previous")
     next = SubmitField("Next")
 
 
+def ViewWeightFormDynamic(total_weeks):
+    class ViewWeightForm(ViewWeightFormBase):
+        pass
+
+    for week_val in range(total_weeks):
+        setattr(ViewWeightForm, 'week_{}'.format(week_val), SubmitField(label="Week {}".format(week_val)))
+    return ViewWeightForm()
+
 class AddWeightForm(FlaskForm):
     days_list = FieldList(StringField())
     form_wide_error = HiddenField()
     start_date = HiddenField()
+    orgin_date = HiddenField()
 
     submit = SubmitField("Save Daily Pounds")
 
